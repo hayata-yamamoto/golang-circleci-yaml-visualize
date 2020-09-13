@@ -6,8 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 
-	"github.com/k0kubun/pp"
-
 	"github.com/goccy/go-graphviz"
 	"github.com/goccy/go-graphviz/cgraph"
 	"github.com/goccy/go-yaml"
@@ -53,6 +51,23 @@ func newGraph() (*graphviz.Graphviz, *cgraph.Graph) {
 	return g, graph
 }
 
+func writeDot(g *graphviz.Graphviz, graph *cgraph.Graph, filename string) {
+	var buf bytes.Buffer
+	if err := g.Render(graph, "dot", &buf); err != nil {
+		log.Fatal(err)
+	}
+
+	_, err := g.RenderImage(graph)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := g.RenderFilename(graph, graphviz.PNG, filename); err != nil {
+		log.Fatal(err)
+	}
+
+}
+
 func main() {
 	data := readYaml("test.yml")
 	g, graph := newGraph()
@@ -63,8 +78,6 @@ func main() {
 		}
 		g.Close()
 	}()
-
-	pp.Print(data)
 
 	nodes := make(map[string]*cgraph.Node)
 	// Generate Nodes
@@ -82,22 +95,6 @@ func main() {
 		}
 	}
 
-	var buf bytes.Buffer
-	if err := g.Render(graph, "dot", &buf); err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(buf.String())
-
-	// 2. get as image.Image instance
-	image, err := g.RenderImage(graph)
-	if err != nil {
-		fmt.Println(image)
-		log.Fatal(err)
-	}
-
-	// 3. write to file directly
-	if err := g.RenderFilename(graph, graphviz.PNG, "graph.png"); err != nil {
-		log.Fatal(err)
-	}
+	writeDot(g, graph, "graph.png")
 
 }
